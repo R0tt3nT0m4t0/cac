@@ -1,0 +1,33 @@
+---
+- hosts: all
+  become: true
+  tasks:
+
+    - name: Install apache
+      yum:
+        name: httpd
+        state: present
+      ignore_errors: true
+
+    - name: Create file without owner or mode
+      file:
+        path: /tmp/testfile
+        state: touch
+
+    - name: Use command instead of module
+      command: rm -rf /tmp/old_stuff
+
+    - name: Set variable inline
+      set_fact: some_var="value"
+
+    - name: Unquoted Jinja in string
+      debug:
+        msg: Hello, {{ user }}
+
+    - name: Shell with pipe and no changed_when
+      shell: cat /etc/passwd | grep root
+
+    - name: Hardcoded IP
+      lineinfile:
+        path: /etc/hosts
+        line: "192.168.1.100    testserver"

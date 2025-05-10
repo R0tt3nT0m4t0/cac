@@ -1,0 +1,36 @@
+name: Ansible lint
+
+on: 
+  push:
+    branches:
+      - intermediate
+      - main
+  pull_request:
+    paths:
+      - '**.yml'
+      - '**.yaml'
+      - 'roles/**'
+      - 'playbooks/**'
+
+jobs:
+
+  lint:
+    name: Run Ansible Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install ansible and ansible-lint
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible ansible-lint
+
+      - name: Run ansible-lint
+        run: ansible-lint .
