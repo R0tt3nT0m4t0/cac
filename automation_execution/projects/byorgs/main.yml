@@ -1,0 +1,49 @@
+---
+- name: Deploy AAP Project from GitHub
+  hosts: localhost
+  gather_facts: false
+  become: false
+  collections:
+    - ansible.controller
+
+  vars_files:
+    - ../../secrets.yml
+    - projects.yml
+
+  environment:
+    CONTROLLER_HOST: "https://aap.home.lab"
+    CONTROLLER_USERNAME: "{{ gateway_username }}"
+    CONTROLLER_PASSWORD: "{{ gateway_password }}"
+    CONTROLLER_VERIFY_SSL: false
+
+  tasks:
+    - name: Create/Update Controller Projects
+      ansible.controller.project:
+        name: "{{ item.name }}"
+        organization: "Default"
+        scm_type: "{{ item.scm_type }}"
+        scm_url: "{{ item.scm_url }}"
+        scm_branch: "{{ item.scm_branch }}"
+        # The 'wait' parameter ensures the playbook waits for the
+        # initial project sync to complete before finishing.
+        wait: true
+        state: present
+      loop: "{{ projects }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    # - name: Create/Update Job Templates
+    #   ansible.controller.job_template:
+    #     name: "{{ item.1.name }}"
+    #     project: "{{ item.0.name }}" # Must match the name of the project created previously
+    #     playbook: "{{ item.1.playbook }}"    # The name of the playbook file in the Git repository
+    #     # NOTE: You must have an Inventory and a Machine Credential created in AAP
+    #     # for this job template to be runnable.
+    #     # inventory: "{{ item.1.inventory }}"
+    #     # credentials:
+    #     #   - "{{ item.1.credentials }}"
+    #     state: present
+    #   loop: "{{ projects | subelements('templates') }}"
+    #   loop_control:
+    #     label: "Project: {{ item.0.name }} | Template: {{ item.1.name }}"
+    #   # The 'subelements' filter creates a loop over each project and its nested 'templates' list.

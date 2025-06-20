@@ -1,0 +1,86 @@
+---
+- name: Configure LDAP Authentication for Ansible Automation Platform
+  hosts: localhost
+  gather_facts: false
+  become: false
+  connection: local
+  collections:
+    - ansible.controller
+  vars_files:
+    - secrets.yml
+    - mappings.yml
+  
+  vars:
+    controller_ldap_bind_password: "{{ ldap_bind_password }}"
+
+  environment:
+    CONTROLLER_HOST: "https://aap.home.lab"
+    CONTROLLER_USERNAME: "{{ gateway_username }}"
+    CONTROLLER_PASSWORD: "{{ gateway_password }}"
+    CONTROLLER_VERIFY_SSL: false
+
+  tasks:
+
+    - name: Create the Corporate LDAP Authenticator
+      ansible.controller.authenticator:
+        name: "Corporate LDAP"
+        enabled: true
+        create_objects: true # Will create users/teams on first login
+        remove_users: true
+        auth_backend: "ansible_base.authenticator_plugins.ldap"
+        configuration:
+          # General LDAP Connection Settings
+          SERVER_URI: "ldaps://corp.xcelenergy.com"
+          BIND_DN: "CN=svc-twr-ad,OU=Infrastructure Accounts,OU=Infrastructure Objects,DC=corp,DC=xcelenergy,DC=com"
+          BIND_PASSWORD: "{{ controller_ldap_bind_password }}"
+          START_TLS: false
+
+          # Group for Login Restriction
+          REQUIRE_GROUP: "CN=SG-CP-AUTOM-AAP,OU=Support Groups,OU=Infrastructure Groups,OU=Infrastructure Objects,DC=corp,DC=xcelenergy,DC=com"
+          
+          # User Search Configuration
+          USER_SEARCH:
+            - "DC=corp,DC=xcelenergy,DC=com"
+            - "SCOPE_SUBTREE"
+            - "(sAMAccountName=%(user)s)"
+
+          # Group Search and Type Configuration
+          GROUP_SEARCH:
+            - "OU=Support Groups,OU=Infrastructure Groups,OU=Infrastructure Objects,DC=corp,DC=xcelenergy,DC=com"
+            - "SCOPE_SUBTREE"
+            - "(objectClass=group)"
+          GROUP_TYPE: "MemberDNGroupType"
+          GROUP_TYPE_PARAMS:
+            member_attr: "member"
+            name_attr: "cn"
+      register: ldap_authenticator
+
+    # RBAC and Attribute Mappings
+    # These tasks create individual mapping rules associated with the main authenticator
+    - name: Configure LDAP User Attribute Mapping
+      ansible.controller.authenticator_map:
+        authenticator: "{{ ldap_authenticator.id }}"
+        name: "User Attribute Map"
+        map_type: user_attrs
+        source_value: '{{ {"email": "mail", "first_name": "givenName", "last_name": "sn"} }}'
+        state: present
+
+    - name: Configure LDAP Superuser Mapping
+      ansible.controller.authenticator_map:
+        authenticator: "{{ ldap_authenticator.id }}"
+        name: "Superuser Flag"
+        map_type: is_superuser
+        source_group: "CN=SG-CP-AAP-Admin,OU=Support Groups,OU=Infrastructure Groups,OU=Infrastructure Objects,DC=corp,DC=xcelenergy,DC=com"
+        state: present
+
+    # This loop creates a mapping rule for every team defined in the vars section
+    - name: Configure LDAP to Team Mappings
+      ansible.controller.authenticator_map:
+        authenticator: "{{ ldap_authenticator.id }}"
+        name: "Map AD group to {{ item.key }}"
+        map_type: team
+        source_group: "{{ item.value.ad_group_dn }}"
+        source_team: "{{ item.key }}"
+        source_organization: "{{ item.value.organization }}"
+        state: present
+      loop: "{{ lookup('dict', ldap_team_mappings) }}"

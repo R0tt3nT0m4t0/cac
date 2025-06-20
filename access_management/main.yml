@@ -14,7 +14,7 @@
 
     - name: Create/Update Organizations
       ansible.platform.organization:
-        gateway_hostname: "https://automationgateway.home.lab"
+        gateway_hostname: "https://aap.home.lab"
         gateway_username: "{{ gateway_username }}"
         gateway_password: "{{ gateway_password }}"
         gateway_validate_certs: false
@@ -25,7 +25,7 @@
 
     - name: Create/Update Users
       ansible.platform.user:
-        gateway_hostname: "https://automationgateway.home.lab"
+        gateway_hostname: "https://aap.home.lab"
         gateway_username: "{{ gateway_username }}"
         gateway_password: "{{ gateway_password }}"
         gateway_validate_certs: false
@@ -40,7 +40,7 @@
 
     - name: Create/Update teams
       ansible.platform.team:
-        gateway_hostname: "https://automationgateway.home.lab"
+        gateway_hostname: "https://aap.home.lab"
         gateway_username: "{{ gateway_username }}"
         gateway_password: "{{ gateway_password }}"
         gateway_validate_certs: false

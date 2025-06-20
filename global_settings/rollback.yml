@@ -6,7 +6,7 @@
   gather_facts: false
 
   vars:
-    gateway_url: "https://automationgateway.home.lab"
+    gateway_url: "https://aap.home.lab"
 
   vars_files:
     - secrets.yml
