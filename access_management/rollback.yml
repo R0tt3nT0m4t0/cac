@@ -11,7 +11,7 @@
     - teams.yml
 
   environment:
-    GATEWAY_HOSTNAME: "https://automationgateway.home.lab"
+    GATEWAY_HOSTNAME: "https://aap.home.lab"
     GATEWAY_USERNAME: "{{ gateway_username }}"
     GATEWAY_PASSWORD: "{{ gateway_password }}"
     GATEWAY_VERIFY_SSL: false

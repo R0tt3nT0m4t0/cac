@@ -1,0 +1,24 @@
+---
+projects:
+  - name: "Hello AAP Project"
+    scm_type: "git"
+    scm_url: "https://github.com/jmedinar/hello-aap.git"
+    scm_branch: "main"
+    templates:
+      - name: "Hello AAP from CAC"
+        playbook: "hello-aap.yml"
+        # inventory: "Demo Inventory"
+        # credentials:
+        #   - "Demo Credential"
+      # You could add another template for the same project here
+      # - name: "Another Template"
+      #   playbook: "another.yml"
+      #   ...
+
+  # You could add a completely new project here
+  # - name: "Another Project"
+  #   scm_type: "git"
+  #   scm_url: "https://github.com/example/another-repo.git"
+  #   ...
+  #   templates:
+  #     - name: ...
