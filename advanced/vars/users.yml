@@ -1,0 +1,70 @@
+---
+aap_users:
+  - username: hubadmin
+    first_name: hub
+    last_name: administrator
+    email: hubadmin@home.lab
+    password: redhat123
+    is_superuser: false
+    state: "present"
+    organizations: "hub"
+  - username: hubuser
+    first_name: hub
+    last_name: user
+    email: hubuser@home.lab
+    password: redhat123
+    is_superuser: false
+    state: "present"
+    organizations: "hub"
+
+
+  - username: netadmin
+    first_name: network
+    last_name: administrator
+    email: netadmin@home.lab
+    password: redhat123
+    is_superuser: false
+    state: "present"
+    organizations: "network"
+  - username: netuser
+    first_name: network
+    last_name: user
+    email: netuser@home.lab
+    password: redhat123
+    is_superuser: false
+    state: "present"
+    organizations: "network"
+  - username: netviewer
+    first_name: network
+    last_name: viewer
+    email: netviewer@home.lab
+    password: redhat123
+    is_superuser: false
+    state: "present"
+    organizations: "network"
+    
+  - username: infraadmin
+    first_name: infrastructure
+    last_name: administrator
+    email: infraadmin@home.lab
+    password: redhat123
+    is_superuser: false
+    state: "present"
+    organizations: "infrastructure"
+  - username: infrauser
+    first_name: infrastructure
+    last_name: user
+    email: infrauser@home.lab
+    password: redhat123
+    is_superuser: false
+    state: "present"
+    organizations: "infrastructure"
+  - username: infraviewer
+    first_name: infrastructure
+    last_name: viewer
+    email: infraviewer@home.lab
+    password: redhat123
+    is_superuser: false
+    state: "present"
+    organizations: "infrastructure"
+...

@@ -1,0 +1,51 @@
+---
+controller_admin_roles:
+  - "approval"
+  - "auditor"
+  - "credential_admin"
+  - "execute"
+  - "execution_environment_admin"
+  - "inventory_admin"
+  - "job_template_admin"
+  - "notification_admin"
+  - "project_admin"
+  - "workflow_admin"
+
+controller_auditor_roles:
+  - "auditor"
+
+controller_creator_roles:
+  - "auditor"
+  - "execute"
+  - "job_template_admin"
+  - "notification_admin"
+  - "project_admin"
+  - "workflow_admin"
+
+controller_executor_roles:
+  - "execute"
+
+decision_admin_roles:
+  - "activation_admin"
+  - "auditor"
+  - "contributor"
+  - "decision_environment_admin"
+  - "credential_admin"
+  - "editor"
+  - "event_stream_admin"
+  - "operator"
+  - "project_admin"
+  - "viewer"
+
+decision_auditor_roles:
+  - "auditor"
+
+decision_creator_roles:
+  - "contributor"
+  - "editor"
+  - "operator"
+  - "viewer"
+
+decision_executor_roles:
+  - "operator"
+...

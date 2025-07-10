@@ -1,0 +1,20 @@
+
+
+Install the necessary collection and role:
+
+[source,shell]
+----
+ansible-galaxy collection install redhat_cop.controller_configuration
+# The role is now part of the infra.aap_configuration collection
+ansible-galaxy collection install infra.aap_configuration
+----
+
+Note: The redhat_cop.aap_configuration has been superseded by infra.aap_configuration. You should use the newer one for modern AAP versions.
+
+Run the playbook:
+
+[source,shell]
+----
+ansible-playbook -J main.yml
+----
+

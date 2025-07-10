@@ -1,0 +1,28 @@
+---
+teams_to_map:
+  - name: "DR-AD"
+    organization: "DR-Disaster Recovery"
+  - name: "DR-AU"
+    organization: "DR-Disaster Recovery"
+  - name: "DR-CC"
+    organization: "DR-Disaster Recovery"
+  - name: "DR-EX"
+    organization: "DR-Disaster Recovery"
+  - name: "DL-AD"
+    organization: "DL-Data Lake"
+  - name: "DL-AU"
+    organization: "DL-Data Lake"
+  - name: "DL-CC"
+    organization: "DL-Data Lake"
+  - name: "DL-EX"
+    organization: "DL-Data Lake"
+  - name: "OS-AD"
+    organization: "OS-OS Delivery"
+  - name: "OS-AU"
+    organization: "OS-OS Delivery"
+  - name: "OS-CC"
+    organization: "OS-OS Delivery"
+  - name: "OS-EX"
+    organization: "OS-OS Delivery"
+  # Add all your other hundreds of teams here...
+...

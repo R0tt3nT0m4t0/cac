@@ -1,0 +1,27 @@
+---
+- name: Create/Update Organizations
+  ansible.platform.organization:
+    name: "{{ item.name }}"
+    description: "{{ item.description }}"
+    state: "{{ item.state }}"
+  loop: "{{ aap_organizations }}"
+
+- name: Create/Update Users
+  ansible.platform.user:
+    username: "{{ item.username }}"
+    email: "{{ item.email }}"
+    first_name: "{{ item.first_name }}"
+    last_name: "{{ item.last_name }}"
+    is_superuser: "{{ item.is_superuser }}"
+    organizations: "{{ item.organizations }}"
+    state: "{{ item.state }}"
+  loop: "{{ aap_users }}"
+
+- name: Create/Update teams
+  ansible.platform.team:
+    name: "{{ item.name }}"
+    description: "{{ item.description }}"
+    organization: "{{ item.organization }}"
+    state: "{{ item.state }}"
+  loop: "{{ aap_teams }}"
+...

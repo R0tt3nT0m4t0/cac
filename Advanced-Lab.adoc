@@ -1,0 +1,747 @@
+= Lab structure
+
+In this lab, we will demonstrate how to use Configuration as Code to configure various aspects of the Ansible Automation Platform (AAP).
+
+This includes:
+
+- First, We will setup the basics for configuring the Automation Platform.
+- Next we will Create some credentials, inventories, and job templates and everything that is needed to create them.
+- Next we will configure the Hub to load in more content.
+- We will then build an execution environment to be used on the platform.
+- Finally for extra credit, a workflow can be created from scratch.
+
+By following this lab, you will learn how to use CaC to maintain a consistent and repeatable infrastructure configuration across different environments. This approach will help prevent drift in configuration, require approval before implementation, and ensure that both development and production deployments are well-maintained.
+
+== Building out the basics for config as code
+
+=== Task 1 - Setting up the project
+
+In this lab, you will be creating configuration files in order to set a state on the Ansible Automation Platform. This requires several prerequisites.
+
+Install the required collections
+
+[source,shell]
+----
+$ ansible-galaxy collection install infra.ee_utilities:4.0.0 infra.aap_configuration:3.1.0 containers.podman:1.16.3 community.general:10.4.0 ansible.hub:1.0.0 ansible.platform:2.5.20250213 ansible.controller:4.6.8
+----
+
+=== Task 2 - Creating Variable Files
+
+Set the variables to be used in the collections for use. These include hosts, usernames, and other variables that are reused in each role.
+
+The variables are defined in the file project/group_vars/all/auth.yml.
+
+[source,yaml]
+----
+include::advanced/group_vars/all/auth.yml[]
+----
+
+=== Task 3 - Creating our inventory file
+
+Create your inventory file inventory.yml, copy the content below to the file.
+
+
+[source,ini]
+----
+include::advanced/inventory.yml[]
+----
+
+WARNING: These are hostnames and should not have 'https://', otherwise things will fail
+
+=== Task 4 - Create our Vault
+
+A vault.yml has been prepoulated, please review this as it provides a source for most of the passwords and secrets used in the lab.
+
+Your username should be: lab-user
+Your password should be: MzMxMjM2
+
+[source,shell]
+----
+include::advanced/vault.yml[]
+----
+
+NOTE: The easiest way to do this is have all passwords be the provided password.
+
+For good configuration as code we recommend retrieving passwords from secure systems secret management systems (such as Hashicorp Vault).
+
+Create a .password file and put a password in it. This is the password vault uses to encrypt secrets.
+
+WARNING: We do not recommend using .password files outside of lab environment This process is just to simplify/speed up the lab.
+
+The ansible.cfg file points to the .password file. This has been preopulated, but please review the ansible.cfg file to see how this lab is connected to hub and uses the password file.
+
+[source,config]
+----
+include::advanced/ansible.cfg[]
+----
+
+Encrypt vault with the password in the .password file
+
+[source,shell]
+----
+$ ansible-vault encrypt vault.yml
+----
+
+=== Task 5 - Create organizations
+
+Create a file group_vars/all/organizations.yml
+
+[source,yaml]
+----
+include::advanced/group_vars/all/organizations.yml[]
+----
+
+=== Task 6 - Create a Team
+
+Create a file group_vars/all/teams.yml
+
+[source,yaml]
+----
+include::advanced/group_vars/all/teams.yml[]
+----
+
+=== Task 7 - Create a local service account user
+
+Create a file project/group_vars/all/users.yml with the below information:
+
+[source,yaml]
+----
+include::advanced/group_vars/all/users.yml[]
+----
+
+=== Task 8 - Create Collection Repositories and Remotes
+
+Create a file group_vars/all/hub_repositories.yml to create the list of community repositories and their remote counterpart.
+
+[source,yaml]
+----
+include::advanced/group_vars/all/hub_repositories.yml[]
+----
+
+=== Task 9 - Create a playbook to apply the configuration
+
+The next step is to create the project/playbooks/aap_config.yml playbook. This playbook will execute the aap_configuration dispatch role, applying the provided configurations in the necessary order.
+
+[source,yaml]
+----
+include::advanced/playbooks/aap_config.yml[]
+----
+
+=== Task 10 - Check your paths
+
+Here’s the desired layout for your folders from the project.
+
+Please examine the file organization to confirm that each file resides in its correct location within this structure. Run the tree command to verify.
+
+[source,shell]
+----
+$ tree
+.
+├── ansible.cfg
+├── group_vars
+│   └── all
+│       ├── auth.yml
+│       ├── hub_repositories.yml
+│       ├── organizations.yml
+│       ├── teams.yml
+│       └── users.yml
+├── inventory.yml
+├── playbooks
+│   └── aap_config.yml
+└── vault.yml
+
+3 directories, 9 files
+----
+
+=== Task 11 - Put the playbook into action
+
+The next step is to run this playbook, this kicks off the initial setup for everything we’ve just created for the Ansible Automation Platform.
+
+[source,shell]
+----
+$ ansible-playbook playbooks/aap_config.yml -i inventory.yml -l execution
+----
+
+While the playbook is running you can go to the Automation Hub tab and peak at the Task Management to see the repository syncing process
+
+Hub task
+Task 12 - Validate configuration was applied
+Navigate to the AAP console and login with the provided passwords (You will find the link to the console on the start page of this lab)
+
+Check that the following objects have been correctly created on AAP and are aligned with the instructions above
+
+Org
+
+Repository
+
+User
+
+Team
+
+✅ Next Challenge
+Once you’ve completed the above tasks we will move towards doing the Controller configuration.
+
+
+Configuring the Automation controller
+In this section, you will only be given a summary of the objects you need to create along with some screenshots of a controller that is configured with the completed code. You will also be provided the variables sections from the readme’s for each of the required roles to help you complete this task.
+
+Task 1 - Configure settings
+Create a file /home/lab-user/casc_lab/group_vars/all/settings.yml with the below content.
+
+
+---
+controller_settings:
+  settings:
+    GALAXY_IGNORE_CERTS: true
+...
+Further documentation are provided below for those who are interested to learn more:
+
+Settings role
+
+Task 2 - Configure Execution Environments
+Create a file /home/lab-user/casc_lab/group_vars/all/execution_environments.yml and add the required information to the list controller_execution_environments to include a new EE (that we will show how to create with code in the next module) called config_as_code with image path {{ aap_hostname }}/config_as_code that is pull always and uses the credential cr_ah.
+
+config ee
+Figure 1. Config Execution Environment
+minimal ee
+Figure 2. Minimal Execution Environment
+supported ee
+Figure 3. Supported Execution Environment
+
+---
+controller_execution_environments:
+  - name: "supported"
+    image: "{{ aap_hostname }}/ee-supported-rhel8"
+    pull: always
+    credential: cr_ah
+
+  - name: "minimal"
+    image: "{{ aap_hostname }}/ee-minimal-rhel8"
+    pull: always
+    credential: cr_ah
+
+...
+While you have not created this EE yet it, we have already added a version to hub so this won’t fail.
+Further documentation for those who are interested to learn more see:
+
+Execution Environments role
+
+Task 3 - Create credential types
+Create a file /home/lab-user/casc_lab/group_vars/all/credential_types.yml where we will create a list called controller_credential_types that has 5 variables per item defined below:
+
+name this is required and will be what the credential type will be called
+
+description this is the description of the credential type
+
+kind The type of credential type being added. Note that only cloud and net can be used for creating credential types.
+
+inputs Enter inputs using either JSON or YAML syntax. Refer to the Ansible controller documentation for example syntax. These will be the fields in the GUI that prompt the user for input.
+
+injectors Enter injectors using either JSON or YAML syntax. Refer to the Ansible controller documentation for example syntax. These are the variables that will then be useable in a job.
+
+The role will iterate through this list and for each item in this list it will create custom credential types for using it in the controller.
+
+
+---
+controller_credential_types:
+  - name: automation_hub
+    description: automation hub
+    kind: cloud
+    inputs:
+      fields:
+        - id: verify_ssl
+          type: boolean
+          label: Verify SSL
+        - id: hostname
+          type: string
+          label: Hostname
+        - id: username
+          type: string
+          label: Username
+        - id: password
+          type: string
+          label: Password
+          secret: true
+        - id: token
+          type: string
+          label: Token
+          secret: true
+      required:
+        - hostname
+    injectors:
+      env:
+        AAP_PASSWORD: !unsafe "{{ password }}"
+        AAP_USERNAME: !unsafe "{{ username }}"
+        AAP_HOSTNAME: !unsafe # Insert appropriate variable from above here
+        AAP_TOKEN: !unsafe # Insert appropriate variable from above here
+        AAP_VALIDATE_CERTS: !unsafe # Insert appropriate variable from above here
+      extra_vars:
+        aap_password: !unsafe "{{ password }}"
+        aap_username: !unsafe "{{ username }}"
+        aap_hostname: !unsafe # Insert appropriate variable from above here
+        aap_token: !unsafe # Insert appropriate variable from above here
+        aap_validate_certs: !unsafe # Insert appropriate variable from above here
+
+  - name: ssh_priv_file
+    kind: cloud
+    description: creates temp ssh priv key to use (cannot have passphrase)
+    inputs:
+      fields:
+        - id: priv_key
+          type: string
+          label: Certificate
+          format: ssh_private_key
+          multiline: true
+          secret: true
+    injectors:
+      env:
+        MY_CERT_FILE_PATH: !unsafe '{{ tower.filename.cert_file }}'
+      file:
+        template.cert_file: !unsafe '{{ priv_key }}'
+...
+Further documentation for those who are interested to learn more see:
+
+Credential types role
+
+Task 4 - Create credentials
+Create a file /home/lab-user/casc_lab/group_vars/all/credentials.yml and add the required information to the list controller_credentials to configure the UI to look like the screenshot. Make it to look like the screenshot, but make sure to use parameters for the values. DO NOT PASTE YOUR PASSWORD IN CLEARTEXT FOR CREDENTIALS!
+
+
+---
+controller_credentials:
+  - name: aap_admin
+    credential_type: Red Hat Ansible Automation Platform
+    organization: config_as_code
+    description: aap admin account
+    inputs:
+      host: "{{ aap_hostname }}"
+      username: "{{ aap_username }}"
+      password: "{{ aap_password }}"
+      verify_ssl: false
+
+  - name: hub_service_account
+    credential_type: automation_hub
+    organization: config_as_code
+    description: automation hub api account
+    inputs:
+      hostname: "{{ aap_hostname }}"
+      username: "{{ aap_service_account_username }}"
+      token: "{{ ah_token }}"
+      verify_ssl: false
+
+  - name: hub_certified
+    credential_type: Ansible Galaxy/Automation Hub API Token
+    organization: config_as_code
+    inputs:
+      url: "https://{{ aap_hostname }}/pulp_ansible/galaxy/rh-certified/"
+      token: "{{ ah_token }}"
+
+  - name: hub_published
+    credential_type: Ansible Galaxy/Automation Hub API Token
+    organization: config_as_code
+    inputs:
+      url: "https://{{ aap_hostname }}/pulp_ansible/galaxy/published/"
+      token: "{{ ah_token }}"
+
+  - name: hub_community
+    credential_type: Ansible Galaxy/Automation Hub API Token
+    organization: config_as_code
+    inputs:
+      url: "https://{{ aap_hostname }}/pulp_ansible/galaxy/community/"
+      token: "{{ ah_token }}"
+
+  - name: hub_community_infra_repo
+    credential_type: Ansible Galaxy/Automation Hub API Token
+    organization: config_as_code
+    inputs:
+      url: "https://{{ aap_hostname }}/pulp_ansible/galaxy/community-infra-repo/"
+      token: "{{ ah_token }}"
+
+  - name: cr_ah
+    credential_type: Container Registry
+    organization: config_as_code
+    inputs:
+      host: "{{ aap_hostname }}"
+      username: "{{ aap_username }}"
+      password: "{{ aap_password }}"
+      verify_ssl: false
+
+  - name: vault
+    credential_type: Vault
+    organization: config_as_code
+    description: vault password
+    inputs:
+      vault_password: "{{ vault_pass }}"
+...
+credential
+Figure 4. Credential
+Further documentation for those who are interested to learn more see:
+
+Credentials role
+
+Task 5 - Create organizations
+Update the file /home/lab-user/casc_lab/group_vars/all/organizations.yml and add the required information to the list aap_organizations to configure the UI to look like the screenshot. Here we are adding the credentials that we created above to the Organization so we can pull collections from Automation Hub.
+
+orgs
+Figure 5. Config as Code Organization
+
+---
+aap_organizations:
+...
+Further documentation for those who are interested to learn more see:
+
+Organizations role
+
+Task 6 - Create projects
+Create a file /home/lab-user/casc_lab/group_vars/all/projects.yml and add the required information to the list controller_projects to configure the UI to look like the screenshot. The project you want to use is
+
+https://github.com/redhat-cop/aap_configuration_template
+You will want to refer to the role documentation to determine which options need to be set
+
+---
+controller_configuration_projects_async_delay: 5
+controller_projects:
+
+...
+project
+Figure 6. Project
+Further documentation for those who are interested to learn more see:
+
+Projects role
+
+Task 7 - Create inventories
+Create a file /home/lab-user/casc_lab/group_vars/all/inventories.yml and add the required information to the list controller_inventories to configure the UI to look like the screenshot
+
+
+---
+controller_inventories:
+...
+inventories
+Figure 7. Inventory
+Further documentation for those who are interested to learn more see:
+
+Inventories role
+
+Task 8 - Create inventory sources
+Add to file /home/lab-user/casc_lab/group_vars/all/inventory_sources.yml and a new variable with the required information to the list controller_inventory_sources to configure the UI to look like the screenshot
+
+
+---
+controller_inventory_sources:
+...
+inventory sources
+Figure 8. Inventory Sources
+Further documentation for those who are interested to learn more see:
+
+Inventory sources role
+
+Task 9 - Create job_templates
+Create a file /home/lab-user/casc_lab/group_vars/all/job_templates.yml and add the required information to the list controller_templates to configure the UI to like the screenshot.
+
+Pay attention to the credentials attached to each job template.
+
+
+---
+controller_templates:
+
+...
+aap config template
+Figure 9. AAP Config Template
+build ee template
+Figure 10. Build EE Template
+Further documentation for those who are interested to learn more see:
+
+Job templates role
+
+Task 10 - Update the Playbook
+Update the playbook to get the hub token for the configuration
+We need to create a token from Automation Hub so that we can provide it to the Platform for the collection syncing to take place.
+
+The next step is to create a playbook/file /home/lab-user/casc_lab/playbooks/aap_config.yml that will call the aap_configuration dispatch role which will apply all provided configurations in the order that they need to be created.
+
+
+---
+- name: Playbook to configure ansible controller post installation
+  hosts: all
+  gather_facts: false
+  vars_files:
+    - ../vault.yml
+  connection: local
+  tasks:
+    - name: Authenticate and get an API token from Automation Hub
+      ansible.hub.ah_token:
+        ah_host: "{{ aap_hostname }}"
+        ah_username: "{{ aap_username }}"
+        ah_password: "{{ aap_password }}"
+        ah_path_prefix: 'galaxy'  # this is for private automation hub
+        ah_verify_ssl: false
+    - name: Fixing format
+      ansible.builtin.set_fact:
+        ah_token: "{{ ah_token['token'] }}"
+    - name: Call dispatch role
+      ansible.builtin.include_role:
+        name: infra.aap_configuration.dispatch
+...
+Task 11 - Run the playbook
+Run /home/lab-user/casc_lab/playbooks/aap_config playbook.
+
+ansible-playbook playbooks/aap_config.yml -i inventory.yml -l execution
+If you run into problems, look back at the section that failed, and check the documentation for that role that was linked. If the output was hidden, look for 'Secure logging variables' on the controller_credentials role documentation.
+
+If you run into an error that says "Failed to get token: HTTP Error 401: Unauthorized" while other tasks pass, please rerun the playbook, this is a known issue.
+Task 12 - See the Results
+After the playbook is complete you should be able to navigate to the controller and see all the changes.
+
+✅ Next Challenge
+Once you’ve completed the above tasks we will move towards building Execution Environment.
+
+
+Creating an Execution Environment
+In this section we will show you step by step how to build an Execution Environment (EE) from code. You will also be publishing this EE to your own private automation hub which you will use in the rest of the tasks.
+
+From that point onwards we will be able to configure the Platform using this execution environment which has all the required dependencies included. We will then make use of ansible-navigator as our tooling to run the configuration playbooks from then on.
+Task 1 - Create our EE Definition
+Create a file /home/lab-user/casc_lab/group_vars/all/ah_ee_list.yml where we will create a list called ee_list that has 4 key things to set per item which are:
+
+name this is required and will be what the EE image will be called
+
+system this is any system packages that would be needed. Set under dependencies.
+
+python these are any python modules that need to be added through pip (excluding ansible). Set under dependencies.
+
+galaxy any collections that you would like to be built into your EE image. Set under dependencies.
+
+which the role will loop over and for each item in this list it will create and publish an EE using the provided variables. Take the example below and use this in your code.
+
+
+---
+ee_list:
+  - name: "{{ aap_hostname }}/config_as_code"
+    pull: always
+    dependencies:
+      galaxy:
+        collections:
+          - name: infra.aap_configuration
+            version: 3.1.0
+          - name: infra.ee_utilities
+            version: 4.0.0
+          - name: ansible.platform
+            version: 2.5.20250213
+          - name: ansible.hub
+            version: 1.0.0
+          - name: ansible.controller
+            version: 4.6.8
+          - name: containers.podman
+            version: 1.16.3
+          - name: community.general
+            version: 10.4.0
+    build_files:
+      - src: /home/lab-user/casc_lab/ansible.cfg
+        dest: configs
+    build_steps:
+      prepend_galaxy:
+        - COPY _build/configs/ansible.cfg /etc/ansible/ansible.cfg
+ee_build_arg_defaults:
+  ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: '-vvvv'
+
+prepend_galaxy:
+  - COPY _build/configs/ansible.cfg /etc/ansible/ansible.cfg
+
+ee_base_image: "{{ aap_hostname }}/ee-minimal-rhel8:latest"
+ee_image_push: false
+ee_prune_images: false
+ee_create_ansible_config: false
+ee_pull_collections_from_hub: false
+ee_create_controller_def: true
+...
+Further documentation for those who are interested to learn more see:
+
+Settings role
+
+Task 2 - Double check your Execution Environments
+Check the file /home/lab-user/casc_lab/group_vars/all/execution_environments.yml and add make sure the config_as_code execution environment is there, you can also look in the gui. It should be listed with image path {{ aap_hostname }}/config_as_code that is pull always and uses the credential cr_ah.
+
+
+---
+controller_execution_environments:
+  <...>
+  - name: "config_as_code"
+    image: "{{ aap_hostname }}/config_as_code"
+    pull: always
+    credential: cr_ah
+...
+Further documentation for those who are interested to learn more see:
+
+Execution Environments role
+
+Task 3 - Create the the Playbook
+Create a playbook to build an EE
+The next step is to create a playbook/file playbooks/build_ee.yml which will run the ee_builder role to create the EE and push it to your Private Automation Hub.
+
+
+- name: Playbook to configure execution environments
+  hosts: execution
+  gather_facts: false
+  connection: local
+  vars_files:
+    - "../vault.yml"
+  tasks:
+    - name: Include ee_builder role
+      ansible.builtin.include_role:
+        name: infra.ee_utilities.ee_builder
+...
+Task 4 - Run the Playbook
+Run the playbook pointing to the recently created inventory file and limit the run to just execution to build your new custom EE and publish it to Private Automation Hub.
+
+
+ansible-playbook -i inventory.yml -l execution playbooks/build_ee.yml
+Further documentation for those who are interested to learn more see:
+
+More on ansible-playbook
+
+Task 5 - If the Playbook Fails
+Push your new custom EE and publish it to Private Automation Hub.
+
+Make sure to replace aap_hostname with your instance controller.tk96l.sandbox5581.opentlc.com, if this fails about overwriting an existing in the controller try a 2nd time it should work. This is an issue with the lab.
+
+
+podman login #aap_hostname
+podman push ##aap_hostname##/config_as_code
+Task 6 - See the Results
+Navigate to the AAP login with the provided passwords
+
+In each applications respective Execution Environment section on the left side you should find the config_as_code Execution Environment.
+
+✅ Next Challenge
+Press the Next button below to go to the next challenge once you’ve completed the tasks.
+
+
+Using the Collection with Workflows
+One of the goals of the Automation Platform Collections and the infra.aap_configuration collection is to allow users to easily create objects in Ansible Automation Platform. In service of that, we will explore how to codify workflows and deploy them on the Platform.
+
+Overview
+First, let’s take a look at the following workflow:
+
+hub task
+Each node represents an action, such as an inventory update, project update or the running of a job template. Other options can also be specified (see the docs for detail), and each node is linked to one or many other nodes. The common practice is to create the workflows inside of the automation controller GUI, but with the Collections, it is possible to manage these workflows through Ansible Playbooks.
+
+Structure
+To start lets explore how each node is structured in code. Each entity in the workflow_nodes list describes a single node. Here is a breakdown of what each of the fields in the node represent:
+
+
+---
+  - identifier: An identifier that is unique within its workflow.
+    related:
+      always_nodes: Dict List of nodes that always execute listed by identifiers
+        - identifier: X
+      failure_nodes: Dict List of nodes that execute on failure listed by identifiers
+      success_nodes: Dict List of nodes that execute on success listed by identifiers
+    unified_job_template:
+      name: Name of Job Template that will be run
+      organization:
+        name: Name of Organization the Job template is in
+      type: Type of node, this is required
+...
+The type can be one of job_template, project, inventory_source, workflow_approval.
+Inventory Sources
+Unified Job template descriptions for inventory sources are slightly different to the others
+
+
+---
+unified_job_template:
+  inventory:
+    organization:
+      name: config_as_code  # Organization that the inventory source is in
+  name: controller_config_source  # Name of inventory source
+  type: inventory_source  # Type
+...
+That the organization is a sub variable of the inventory and is the organization that the inventory belongs to, not the workflow.
+Approval Nodes
+Approval nodes do not have organizations
+
+
+---
+unified_job_template:
+  description: Approval node to continue job
+  timeout: 900  # Timeout before the Approval fails
+  type: workflow_approval  # Type
+  name: Approve to config controller  # Name that shows on node
+...
+Project updates and Job templates
+Project updates and Job templates share the same model
+
+
+---
+unified_job_template:
+  name: Demo Project  # Name of the Project or Job Template
+  organization:
+    name: Default  # Organization the Project or Job Template is in
+  type: project  # Type
+...
+That the type can be either project or job_template
+Changing the workflow
+By modifying the variable that represents the workflow, we can add additional nodes, remove or remap existing nodes, or even change the job template a node runs, amongst other things.
+
+An example of removing a node:
+
+
+---
+- identifier: Demo Job Template
+  unified_job_template:
+    name: Demo Job Template
+    organization:
+      name: Satellite
+    type: job_template
+  state: absent
+...
+It still requires a valid unified job template, but it will delete the node from the workflow.
+Task 1 - Putting it together
+The above instructions are building blocks. Time to put them to use, below is the start of the workflow illustrated above. Using what you know, recreate it in the controller
+
+hub task
+
+---
+workflow_job_templates:
+  - name: Configuration Workflow
+    workflow_nodes:
+      - identifier: Sync Inventory
+        unified_job_template:
+          inventory:
+            name: config_as_code
+            organization:
+              name: config_as_code
+            type: inventory
+          name: controller_config_source
+          type: inventory_source
+        related:
+          always_nodes:
+            - identifier: Configure Hub
+...
+Use the following playbooks/workflow_config.yml playbook to just run workflows
+
+
+---
+- name: Playbook to configure workflows
+  hosts: all
+  vars_files:
+    - "../vault.yml"
+  connection: local
+  roles:
+    - infra.aap_configuration.controller_workflow_job_templates
+...
+With this console command using tags:
+
+
+ansible-playbook -i inventory.yml -l execution playbooks/workflow_config.yml
+Further documentation for creating workflows can be found here:
+
+Workflow Job Templates role
+
+Automation controller workflow deployment as code - Ansible Blog
+
+✅ Done
+You’ve completed the lab, you should now have everything you need to start using configuration as code in your own environment!
+
+Further Reading
+AAP Configuration Template
+

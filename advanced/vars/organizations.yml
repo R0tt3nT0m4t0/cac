@@ -1,0 +1,21 @@
+---
+aap_organizations:
+  - name: hub
+    description: hub organization
+    state: present
+  - name: network
+    description: network organization
+    state: present
+  - name: infrastructure
+    description: infrastructure organization
+    state: present
+  - name: "DR-Disaster Recovery"
+    description: DR organization
+    state: present
+  - name: "DL-Data Lake"
+    description: DL organization
+    state: present
+  - name: "OS-OS Delivery"
+    description: OS organization
+    state: present
+...

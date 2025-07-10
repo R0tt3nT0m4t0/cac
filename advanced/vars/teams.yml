@@ -1,0 +1,101 @@
+---
+aap_teams:
+  - name: hub_admins
+    description: hub administrators
+    organization: hub
+    state: present
+    users:
+      - hubadmin
+  - name: hub_users
+    description: hub users
+    organization: hub
+    state: present
+    users:
+      - hubuser
+
+  - name: network_admins
+    description: network administrators
+    organization: network
+    state: present
+    users:
+  - name: network_users
+    description: network users
+    organization: network
+    state: present
+    users:
+  - name: network_viewers
+    description: network viewers
+    organization: network
+    state: present
+    users:
+      - netviewer
+
+  - name: infra_admins
+    description: infrastructure administrators
+    organization: infrastructure
+    state: present
+    users:
+  - name: infra_users
+    description: infrastructure users
+    organization: infrastructure
+    state: present
+    users:
+      - infrauser
+  - name: infra_viewers
+    description: infrastructure viewers
+    organization: infrastructure
+    state: present
+    users:
+      - infraviewer
+
+  - name: "DR-AD"
+    description: DR administrators
+    organization: "DR-Disaster Recovery"
+    state: present
+  - name: "DR-AU"
+    description: DR auditors
+    organization: "DR-Disaster Recovery"
+    state: present
+  - name: "DR-CC"
+    description: DR content creators
+    organization: "DR-Disaster Recovery"
+    state: present
+  - name: "DR-EX"
+    description: DR executors
+    organization: "DR-Disaster Recovery"
+    state: present
+
+  - name: "DL-AD"
+    description: DL administrators
+    organization: "DL-Data Lake"
+    state: present
+  - name: "DL-AU"
+    description: DL auditors
+    organization: "DL-Data Lake"
+    state: present
+  - name: "DL-CC"
+    description: DL content creators
+    organization: "DL-Data Lake"
+    state: present
+  - name: "DL-EX"
+    description: DL executors
+    organization: "DL-Data Lake"
+    state: present
+
+  - name: "OS-AD"
+    description: OS administrators
+    organization: "OS-OS Delivery"
+    state: present
+  - name: "OS-AU"
+    description: OS auditors
+    organization: "OS-OS Delivery"
+    state: present
+  - name: "OS-CC"
+    description: OS content creators
+    organization: "OS-OS Delivery"
+    state: present
+  - name: "OS-EX"
+    description: OS executors
+    organization: "OS-OS Delivery"
+    state: present
+...

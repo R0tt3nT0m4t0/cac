@@ -1,0 +1,94 @@
+---
+
+- name: "Load role definitions from file"
+  ansible.builtin.include_vars:
+    file: vars/role-mappings.yml
+  run_once: true
+
+- name: "Get all EDA Team IDs"
+  ansible.builtin.uri:
+    url: "{{ gateway_host }}/api/gateway/v1/teams/?page_size=1000" # Get all teams
+    url_username: "{{ gateway_username }}"
+    url_password: "{{ gateway_password }}"
+    validate_certs: false
+    force_basic_auth: true
+  register: all_eda_teams_response
+  run_once: true
+
+- name: "Get all available EDA Organization Role Definitions"
+  ansible.builtin.uri:
+    url: "{{ gateway_host }}/api/gateway/v1/role_definitions/"
+    url_username: "{{ gateway_username }}"
+    url_password: "{{ gateway_password }}"
+    validate_certs: false
+    force_basic_auth: true
+  register: all_eda_role_defs_response
+  run_once: true
+
+- name: "Create a lookup dictionary for Teams"
+  ansible.builtin.set_fact:
+    # Creates a map like: { "DR-AD": {"id": 1, "org_id": 5}, ... }
+    eda_team_lookup: "{{ eda_team_lookup | default({}) | combine({item.name: {'id': item.id, 'organization_id': item.organization_id}}) }}"
+  loop: "{{ all_eda_teams_response.json.results }}"
+  run_once: true
+  when: all_eda_teams_response.json.results is defined
+
+- name: "Create a lookup dictionary for Organization Roles"
+  ansible.builtin.set_fact:
+    # Creates a map for roles like: { "Organization Admin": 4, "Organization Member": 5 }
+    eda_role_lookup: "{{ eda_role_lookup | default({}) | combine({item.name: item.id}) }}"
+  # This loop filters to only include roles applicable to organizations
+  loop: "{{ all_eda_role_defs_response.json.results | selectattr('content_type', 'equalto', 'shared.organization') }}"
+  run_once: true
+  when: all_eda_role_defs_response.json.results is defined
+
+# - name: "Create lookup dictionaries for IDs"
+#   ansible.builtin.set_fact:
+#     # Creates a map like: { "DR-AD": {"id": 1, "org_id": 5}, ... }
+#     eda_team_lookup: "{{ eda_team_lookup | default({}) | combine({item.name: {'id': item.id, 'organization_id': item.organization_id}}) }}"
+#     # Creates a map for roles like: { "Organization Admin": 4, "Organization Member": 5 }
+#     # It filters to only include roles applicable to organizations.
+#     eda_role_lookup: "{{ eda_role_lookup | default({}) | combine({item.name: item.id}) }}"
+#   loop: >-
+#     {{
+#       all_eda_teams_response.json.results +
+#       (all_eda_role_defs_response.json.results | selectattr('content_type', 'equalto', 'shared.organization'))
+#     }}
+#   run_once: true
+#   when: all_eda_role_defs_response.json is defined
+
+- name: "Determine which role list to use for team '{{ team_item.name }}'"
+  ansible.builtin.set_fact:
+    roles_to_apply: >-
+      {% if team_item.name.endswith('-AD') %}{{ decision_admin_roles }}
+      {% elif team_item.name.endswith('-AU') %}{{ decision_auditor_roles }}
+      {% elif team_item.name.endswith('-CC') %}{{ decision_creator_roles }}
+      {% elif team_item.name.endswith('-EX') %}{{ decision_executor_roles }}
+      {% else %}[]
+      {% endif %}
+  when: team_item.name[-2:] in ['AD', 'AU', 'CC', 'EX']
+
+- name: "Assign EDA roles to {{ team_item.name }}"
+  ansible.builtin.uri:
+    url: "{{ gateway_host }}/api/gateway/v1/role_team_assignments/"
+    method: POST
+    url_username: "{{ gateway_username }}"
+    url_password: "{{ gateway_password }}"
+    validate_certs: false
+    force_basic_auth: true
+    status_code: [201, 400] # 201=Created, 400=Bad Request (often means role already exists)
+    body_format: json
+    body:
+      team_id: "{{ eda_team_lookup[team_item.name].id }}"
+      role_definition_id: "{{ eda_role_lookup[eda_role_name_item] }}"
+      object_id: "{{ eda_team_lookup[team_item.name].organization_id }}"
+  loop: "{{ roles_to_apply }}"
+  loop_control:
+    loop_var: eda_role_name_item
+    label: "Assigning EDA Role: {{ eda_role_name_item }}"
+  when:
+    - roles_to_apply is defined
+    - roles_to_apply | length > 0
+    - team_item.name in eda_team_lookup
+    - eda_role_lookup is defined
+...

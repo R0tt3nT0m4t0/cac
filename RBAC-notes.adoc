@@ -1,0 +1,144 @@
+= AAP 2.5 RBAC and Sharing Strategy for Enterprise Teams
+:toc: left
+:toclevels: 2
+:sectnums:
+:icons: font
+
+== 1. Introduction
+
+This guide outlines a best-practice strategy for managing Role-Based Access Control (RBAC) in Ansible Automation Platform (AAP) 2.5. It is designed for large environments where many teams need to collaborate, share common resources like credentials and inventories, but also maintain private resources within their own operational silos.
+
+This strategy addresses two primary challenges:
+
+. Sharing Within an Organization: How can different teams (e.g., net-lsb-admins and net-noa-admins within the "Network" organization) share a common inventory while keeping their own application-specific inventories private?
+. Sharing Across Organizations: How can a central team (e.g., "Infrastructure") securely provide a global credential (like for Red Hat Satellite) to teams in other organizations (e.g., the "Network" organization)?
+
+The solution is a Hub-and-Spoke model that leverages AAP's concepts of Organizations, Teams, and specific Role assignments.
+
+== 2. The Hub-and-Spoke RBAC Model
+
+At its core, this model uses a central "hub" organization to own shared resources and "spoke" organizations for each business unit or function.
+
+Central "Platform" or "Infrastructure" Organization (The Hub):
+
+This organization is managed by the core AAP administrators.
+
+It owns all globally shared resources that many teams need.
+
+Examples:
+
+Credentials for central services (Red Hat Satellite, CyberArk, HashiCorp Vault).
+
+Inventories that sync with a central source of truth (like a CMDB).
+
+Centrally-managed, common Execution Environments.
+
+Business Unit Organizations (The Spokes):
+
+These are your top-level business or IT functions (e.g., Network, Infrastructure, Cloud, Developers).
+
+Each organization has its own Organization Admins who can manage teams and resources within their organization.
+
+They own resources specific to their function.
+
+== 3. Solving: Sharing Within an Organization
+
+Let's use your "Network" organization example. You want the net-lsb and net-noa teams to share some things but not others.
+
+Scenario:
+
+Shared Resource: A common inventory named All Network Devices.
+
+Private Resources: Inventories named LSB Devices and NOA Devices.
+
+Shared Credential: A credential named Network Device SSH Key.
+
+Implementation Steps:
+
+Create the Teams:
+Within the "Network" Organization, create all necessary teams: net-lsb-admins, net-lsb-users, net-noa-admins, etc.
+
+Create the Inventories:
+Create the three inventories: All Network Devices, LSB Devices, and NOA Devices.
+
+Assign Permissions for Private Inventories:
+
+Go to the LSB Devices inventory -> Access tab.
+
+Click Add and give the net-lsb-admins team the Admin role.
+
+Go to the NOA Devices inventory -> Access tab.
+
+Click Add and give the net-noa-admins team the Admin role.
+
+Result: Each team can only see and manage its own private inventory.
+
+Assign Permissions for the Shared Inventory:
+
+Go to the All Network Devices inventory -> Access tab.
+
+Click Add and give both the net-lsb-admins team and the net-noa-admins team the Use role.
+
+Result: Both teams can now select and use the All Network Devices inventory in their Job Templates, but they cannot edit its hosts or sources.
+
+Share the Credential Securely:
+This uses the powerful Owner/Use model for credentials.
+
+Create the Network Device SSH Key credential.
+
+Set its Owner to a high-level team within the "Network" organization (e.g., a "Network Org Admins" team). This team is responsible for managing the secret itself.
+
+Now, go to the Network Device SSH Key credential -> Access tab.
+
+Click Add and give both the net-lsb-admins team and the net-noa-admins team the Use role.
+
+Result: Users in the LSB and NOA teams can now select and use this credential in their Job Templates, but they cannot view or edit the sensitive key/password. This is the key to secure sharing.
+
+== 4. Solving: Sharing Across Organizations
+
+Now, let's solve the second challenge: sharing a global credential owned by the "Infrastructure" organization with the "Network" organization.
+
+Scenario:
+
+The Infrastructure Organization owns a credential named Global Satellite Key.
+
+The net-lsb-admins team from the Network Organization needs to use this key to run patching jobs.
+
+Implementation Steps:
+
+Ownership (in the "Infrastructure" Org):
+
+An admin in the "Infrastructure" organization creates the Global Satellite Key credential.
+
+They set the Owner of this credential to one of their own teams (e.g., infra-admins).
+
+Granting Cross-Organizational Access:
+
+The Infrastructure admin navigates to the Global Satellite Key credential -> Access tab.
+
+They click Add. The "Add Users/Teams" wizard appears.
+
+They can now search for and select the net-lsb-admins team, even though it belongs to the "Network" organization.
+
+They grant the net-lsb-admins team the Use role.
+
+Result:
+A member of the net-lsb-admins team, while working inside their "Network" organization, can now create a Job Template and will see the Global Satellite Key in the list of available credentials to attach. They can use it, but they cannot see the secret, and the credential remains securely owned and managed by the "Infrastructure" team.
+
+This same principle applies to sharing any object. You can grant a team from one organization access to an inventory, project, or template owned by another.
+
+== 5. Automating with Configuration as Code (CaC)
+
+Managing this structure manually for hundreds of teams is not feasible. The entire RBAC model should be defined as code using Ansible playbooks and the ansible.controller collection.
+
+Your existing LDAP group structure is perfect for this. The strategy is:
+
+Define Organizations and Teams in YAML: Create a structured variables file that defines your organizations and the teams within them.
+
+Map LDAP Groups to Teams: Use the ansible.controller.authenticator_map module in a loop to map each AD group (e.g., CN=SG-CP-AAP-LSB-Admin,...) to its corresponding AAP Team (net-lsb-admins).
+
+Define Resources and Permissions in YAML: Create variable files that define your inventories, credentials, projects, and job templates.
+
+Assign Roles Programmatically: Use the ansible.controller.role module to grant your teams the necessary permissions (Admin, Use, etc.) on the resources you've defined.
+
+By defining your entire RBAC structure as code, you create a system that is auditable, repeatable, and can be managed through a GitOps workflow.

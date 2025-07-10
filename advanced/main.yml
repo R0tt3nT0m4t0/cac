@@ -1,0 +1,45 @@
+---
+- name: Configure AAP Access Management
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    gateway_host: "https://aap.home.lab"
+
+  environment:
+    GATEWAY_HOSTNAME: "{{ gateway_host }}"
+    GATEWAY_USERNAME: "{{ gateway_username }}"
+    GATEWAY_PASSWORD: "{{ gateway_password }}"
+    GATEWAY_VERIFY_SSL: false
+    CONTROLLER_HOST: "{{ gateway_host}}"
+    CONTROLLER_USERNAME: "{{ gateway_username }}"
+    CONTROLLER_PASSWORD: "{{ gateway_password }}"
+    CONTROLLER_VERIFY_SSL: false
+
+  vars_files:
+    - vars/secrets.yml
+    - vars/organizations.yml
+    - vars/users.yml
+    - vars/teams.yml
+    - vars/team-roles.yml
+
+  tasks:
+
+    # - name: Create User Structure (Organizations, Users, Teams)
+    #   ansible.builtin.include_tasks: access.yml
+
+    # - name: Apply Roles to Teams
+    #   ansible.builtin.include_tasks: controller-roles.yml
+    #   loop: "{{ teams_to_map }}"
+    #   loop_control:
+    #     loop_var: team_item
+    #     label: "Processing Team: {{ team_item.name }}"
+
+    - name: Apply EDA Roles to Teams
+      ansible.builtin.include_tasks: decision-roles.yml
+      loop: "{{ teams_to_map }}"
+      loop_control:
+        loop_var: team_item
+        label: "Processing EDA Roles for Team: {{ team_item.name }}"
+...

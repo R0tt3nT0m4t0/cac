@@ -1,0 +1,37 @@
+---
+
+- name: "Load role definitions from file"
+  ansible.builtin.include_vars:
+    file: vars/role-mappings.yml
+  run_once: true
+
+
+- name: "Determine which role list to use for team '{{ team_item.name }}'"
+  ansible.builtin.set_fact:
+    roles_to_apply: >-
+      {% if team_item.name.endswith('-AD') %}{{ controller_admin_roles }}
+      {% elif team_item.name.endswith('-AU') %}{{ controller_auditor_roles }}
+      {% elif team_item.name.endswith('-CC') %}{{ controller_creator_roles }}
+      {% elif team_item.name.endswith('-EX') %}{{ controller_executor_roles }}
+      {% else %}[]
+      {% endif %}
+  when: team_item.name[-2:] in ['AD', 'AU', 'CC', 'EX']
+
+- name: "The role to be used for {{ team_item.name }} will be"
+  ansible.builtin.debug:
+    msg: "{{ roles_to_apply }}"
+  
+- name: "Assign roles to {{ team_item.name }}"
+  ansible.controller.role:
+    team: "{{ team_item.name }}"
+    organizations: 
+      - "{{ team_item.organization }}"
+    role: "{{ role_name_item }}"
+    state: present
+  loop: "{{ roles_to_apply }}"
+  loop_control:
+    loop_var: role_name_item
+    label: "Assigning Role: {{ role_name_item }}"
+  when: roles_to_apply | length > 0
+
+...
