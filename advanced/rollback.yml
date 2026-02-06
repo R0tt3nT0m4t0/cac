@@ -26,20 +26,23 @@
 
   tasks:
 
-    - name: Create User Structure (Organizations, Users, Teams)
-      ansible.builtin.include_tasks: access.yml
+    - name: Rollback teams
+      ansible.platform.team:
+        name: "{{ item.name }}"
+        organization: "{{ item.organization }}"
+        state: absent
+      loop: "{{ aap_teams }}"
 
-    - name: Apply Roles to Teams
-      ansible.builtin.include_tasks: controller-roles.yml
-      loop: "{{ teams_to_map }}"
-      loop_control:
-        loop_var: team_item
-        label: "Processing Team: {{ team_item.name }}"
+    - name: Rollback Users
+      ansible.platform.user:
+        username: "{{ item.username }}"
+        state: absent
+      loop: "{{ aap_users }}"
 
-    - name: Apply EDA Roles to Teams
-      ansible.builtin.include_tasks: decision-roles.yml
-      loop: "{{ teams_to_map }}"
-      loop_control:
-        loop_var: team_item
-        label: "Processing EDA Roles for Team: {{ team_item.name }}"
+    - name: Rollback Organizations
+      ansible.platform.organization:
+        name: "{{ item.name }}"
+        state: absent
+      loop: "{{ aap_organizations }}"
+
 ...

@@ -31,13 +31,13 @@
   register: all_eda_role_defs_response
   run_once: true
 
-- name: "Create a lookup dictionary for Teams"
-  ansible.builtin.set_fact:
-    # Creates a map like: { "DR-AD": {"id": 1, "org_id": 5}, ... }
-    eda_team_lookup: "{{ eda_team_lookup | default({}) | combine({item.name: {'id': item.id, 'organization_id': item.organization_id}}) }}"
-  loop: "{{ all_eda_teams_response.json.results }}"
-  run_once: true
-  when: all_eda_teams_response.json.results is defined
+# - name: "Create a lookup dictionary for Teams"
+#   ansible.builtin.set_fact:
+#     # Creates a map like: { "DR-AD": {"id": 1, "org_id": 5}, ... }
+#     eda_team_lookup: "{{ eda_team_lookup | default({}) | combine({item.name: {'id': item.id, 'organization_id': item.organization_id}}) }}"
+#   loop: "{{ all_eda_teams_response.json.results }}"
+#   run_once: true
+#   when: all_eda_teams_response.json.results is defined
 
 - name: "Create a lookup dictionary for Organization Roles"
   ansible.builtin.set_fact:

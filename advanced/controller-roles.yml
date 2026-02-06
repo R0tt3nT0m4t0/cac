@@ -5,7 +5,6 @@
     file: vars/role-mappings.yml
   run_once: true
 
-
 - name: "Determine which role list to use for team '{{ team_item.name }}'"
   ansible.builtin.set_fact:
     roles_to_apply: "{{ controller_admin_roles if team_item.name.endswith('-AD')
