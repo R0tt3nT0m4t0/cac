@@ -1,0 +1,29 @@
+---
+- name: Constructed Inventory Creation
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - ../../secrets.yml
+
+  environment:
+    CONTROLLER_HOST: "https://aap.home.lab"
+    CONTROLLER_USERNAME: "{{ gateway_username }}"
+    CONTROLLER_PASSWORD: "{{ gateway_password }}"
+    CONTROLLER_VERIFY_SSL: false
+
+  tasks:
+
+    - name: Get the list of all the existing inventories in the system
+
+    - name: Create constructed inventory
+      ansible.controller.inventory:
+        name: all_systems
+        description: A merge of of all the available inventories
+        organization: Default
+        state: present
+        kind: constructed
+        input_inventories:
+          - "development"
+          - "production"

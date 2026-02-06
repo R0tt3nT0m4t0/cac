@@ -8,7 +8,7 @@
     - ../../secrets.yml
 
   environment:
-    CONTROLLER_HOST: "https://automationgateway.home.lab"
+    CONTROLLER_HOST: "https://aap.home.lab"
     CONTROLLER_USERNAME: "{{ gateway_username }}"
     CONTROLLER_PASSWORD: "{{ gateway_password }}"
     CONTROLLER_VERIFY_SSL: false
@@ -67,15 +67,15 @@
     - name: Generate node_names by group list
       ansible.builtin.set_fact:
         all_node_names: >-
-        {{
-          all_node_names | default({}) | combine(
-            {
-              group.0.group_name:
-                (all_node_names[group.0.group_name] | default([])) + [group.1.node_name]
-            },
-            recursive=true
-          )
-        }}
+          {{
+            all_node_names | default({}) | combine(
+              {
+                group.0.group_name:
+                  (all_node_names[group.0.group_name] | default([])) + [group.1.node_name]
+              },
+              recursive=true
+            )
+          }}
       loop: "{{ inventory_groups | subelements('managed_nodes') }}"
       loop_control:
         loop_var: group

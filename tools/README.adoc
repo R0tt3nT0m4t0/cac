@@ -18,8 +18,8 @@ In the controller machine as the regular user (usually "ansible") install:
 
 [source,bash]
 ----
-$ ssh automationcontroller.home.lab "sudo dnf install -yq pip3"
-$ ssh automationcontroller.home.lab "pip3 install awxkit"
+$ ssh ansible@aap.home.lab "sudo dnf install -yq pip3"
+$ ssh ansible@aap.home.lab "pip3 install awxkit"
 ----
 
 === Executing

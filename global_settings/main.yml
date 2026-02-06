@@ -7,7 +7,7 @@
 
   tasks:
 
-    - name: Check if backup already exist 
+    - name: Check if backup already exist
       ansible.builtin.stat:
         path: "{{ pathlogo }}.bak"
       register: backup_status

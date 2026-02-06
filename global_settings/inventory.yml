@@ -3,13 +3,13 @@ all:
   vars:
     logo: 'aap-logo.svg'
   hosts:
-    automationcontroller.home.lab:
+    aap.home.lab:
       pathlogo: '/var/lib/awx/public/static/media/{{ logo }}'
       group: awx
       mode: '0644'
       service: automation-controller.service
-    automationgateway.home.lab:
-      pathlogo: '/var/lib/ansible-automation-platform/platform/ui/assets/{{ logo }}'
-      group: nginx
-      mode: '0655'
-      service: automation-gateway-proxy.service
+    # aap.home.lab:
+    #   pathlogo: '/var/lib/ansible-automation-platform/platform/ui/assets/{{ logo }}'
+    #   group: nginx
+    #   mode: '0655'
+    #   service: automation-gateway-proxy.service

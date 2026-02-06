@@ -1,16 +1,16 @@
 ---
-- name: export configuration
+- name: Export configuration
   hosts: localhost
   gather_facts: true
 
   vars:
     config_dir: "aap_config_export"
     export_date: "{{ ansible_date_time.iso8601 }}"
-    controller_host: "automationcontroller.home.lab"
+    controller_host: "aap.home.lab"
     controller_username: "admin"
     # Consider using ansible-vault for password management
-    controller_password: "redhat123"  
-  
+    controller_password: "redhat123"
+
   tasks:
 
     - name: Ensure output directory exists
@@ -30,7 +30,7 @@
 
     - name: Save results to JSON file
       ansible.builtin.copy:
-        content:  "{{ results.assets | to_nice_json }}"
+        content: "{{ results.assets | to_nice_json }}"
         dest: "{{ config_dir }}/full_export_{{ export_date }}.json"
         mode: "0644"
 
@@ -41,4 +41,3 @@
         mode: '0644'
       loop: "{{ results.assets.keys() | list }}"
       when: results.assets[item] | length > 0
-      
