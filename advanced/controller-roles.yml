@@ -8,13 +8,11 @@
 
 - name: "Determine which role list to use for team '{{ team_item.name }}'"
   ansible.builtin.set_fact:
-    roles_to_apply: >-
-      {% if team_item.name.endswith('-AD') %}{{ controller_admin_roles }}
-      {% elif team_item.name.endswith('-AU') %}{{ controller_auditor_roles }}
-      {% elif team_item.name.endswith('-CC') %}{{ controller_creator_roles }}
-      {% elif team_item.name.endswith('-EX') %}{{ controller_executor_roles }}
-      {% else %}[]
-      {% endif %}
+    roles_to_apply: "{{ controller_admin_roles if team_item.name.endswith('-AD')
+      else controller_auditor_roles if team_item.name.endswith('-AU')
+      else controller_creator_roles if team_item.name.endswith('-CC')
+      else controller_executor_roles if team_item.name.endswith('-EX')
+      else [] }}"
   when: team_item.name[-2:] in ['AD', 'AU', 'CC', 'EX']
 
 - name: "The role to be used for {{ team_item.name }} will be"

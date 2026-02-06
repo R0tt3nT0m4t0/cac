@@ -5,6 +5,12 @@
     file: vars/role-mappings.yml
   run_once: true
 
+- name: "Initialize EDA lookup dictionaries"
+  ansible.builtin.set_fact:
+    eda_team_lookup: {}
+    eda_role_lookup: {}
+  run_once: true
+
 - name: "Get all EDA Team IDs"
   ansible.builtin.uri:
     url: "{{ gateway_host }}/api/gateway/v1/teams/?page_size=1000" # Get all teams
@@ -42,30 +48,13 @@
   run_once: true
   when: all_eda_role_defs_response.json.results is defined
 
-# - name: "Create lookup dictionaries for IDs"
-#   ansible.builtin.set_fact:
-#     # Creates a map like: { "DR-AD": {"id": 1, "org_id": 5}, ... }
-#     eda_team_lookup: "{{ eda_team_lookup | default({}) | combine({item.name: {'id': item.id, 'organization_id': item.organization_id}}) }}"
-#     # Creates a map for roles like: { "Organization Admin": 4, "Organization Member": 5 }
-#     # It filters to only include roles applicable to organizations.
-#     eda_role_lookup: "{{ eda_role_lookup | default({}) | combine({item.name: item.id}) }}"
-#   loop: >-
-#     {{
-#       all_eda_teams_response.json.results +
-#       (all_eda_role_defs_response.json.results | selectattr('content_type', 'equalto', 'shared.organization'))
-#     }}
-#   run_once: true
-#   when: all_eda_role_defs_response.json is defined
-
 - name: "Determine which role list to use for team '{{ team_item.name }}'"
   ansible.builtin.set_fact:
-    roles_to_apply: >-
-      {% if team_item.name.endswith('-AD') %}{{ decision_admin_roles }}
-      {% elif team_item.name.endswith('-AU') %}{{ decision_auditor_roles }}
-      {% elif team_item.name.endswith('-CC') %}{{ decision_creator_roles }}
-      {% elif team_item.name.endswith('-EX') %}{{ decision_executor_roles }}
-      {% else %}[]
-      {% endif %}
+    roles_to_apply: "{{ decision_admin_roles if team_item.name.endswith('-AD')
+      else decision_auditor_roles if team_item.name.endswith('-AU')
+      else decision_creator_roles if team_item.name.endswith('-CC')
+      else decision_executor_roles if team_item.name.endswith('-EX')
+      else [] }}"
   when: team_item.name[-2:] in ['AD', 'AU', 'CC', 'EX']
 
 - name: "Assign EDA roles to {{ team_item.name }}"
@@ -89,6 +78,7 @@
   when:
     - roles_to_apply is defined
     - roles_to_apply | length > 0
-    - team_item.name in eda_team_lookup
+    - eda_team_lookup is defined
     - eda_role_lookup is defined
+    - team_item.name in eda_team_lookup
 ...
