@@ -1,0 +1,18 @@
+---
+- name: Push Credentials to AAP 2.6
+  hosts: localhost
+  gather_facts: false
+  connection: local
+
+  vars:
+    controller_hostname: "https://aap26.home.lab"
+    controller_username: "admin"
+    controller_password: "redhat123"
+    controller_validate_certs: false
+    controller_api_v2_path: "/api/controller/v2/"
+    controller_credentials: "{{ (lookup('file', 'aap25_credentials.txt') | from_yaml).controller_credentials }}"
+
+  tasks:
+    - name: Ensure Credentials exist in the new environment
+      ansible.builtin.include_role:
+        name: infra.controller_configuration.credentials
