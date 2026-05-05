@@ -1,0 +1,60 @@
+---
+- name: Extract Credential List from AAP 2.5
+  hosts: localhost
+  gather_facts: false
+  connection: local
+
+  vars:
+    controller_api_url: "https://aap.home.lab/api/controller/v2/credentials"
+    controller_username: "admin"
+    controller_password: "redhat123"
+    output_file: "aap25_credentials.txt"
+
+  tasks:
+
+    - name: Fetch credentials from API
+      ansible.builtin.uri:
+        url: "{{ controller_api_url }}?page_size=200"
+        method: GET
+        user: "{{ controller_username }}"
+        password: "{{ controller_password }}"
+        force_basic_auth: true
+        validate_certs: false
+        status_code: 200
+      register: credential_response
+
+    - name: Transform and save as YAML
+      ansible.builtin.copy:
+        dest: "./{{ output_file }}"
+        mode: '0644'
+        content: |
+          ---
+          controller_credentials:
+          {% for cred in credential_response.json.results %}
+            - name: "{{ cred.name }}"
+              description: "{{ cred.description | default('') }}"
+              organization: "{{ cred.summary_fields.organization.name if cred.summary_fields.organization is defined else 'Default' }}"
+              credential_type: "{{ cred.summary_fields.credential_type.name }}"
+              # Secrets cannot be exported via API; placeholders added for manual entry
+              inputs:
+          {% for key, value in cred.inputs.items() %}
+                {{ key }}: "{{ value if 'password' not in key and 'key' not in key and 'secret' not in key else 'PASSWORD' }}"
+          {% endfor %}
+          {% endfor %}
+
+#    - name: Extract names and save to file
+#      ansible.builtin.copy:
+#        content: |
+#          # AAP Credential Export - {{ ansible_date_time.iso8601 if ansible_date_time is defined else "Now" }}
+#          {% for cred in credential_response.json.results %}
+#          - {{ cred.name }} (ID: {{ cred.id }}, Type: {{ cred.credential_type }})
+#          {% endfor %}
+#        dest: "./{{ output_file }}"
+
+#    - name: Summary
+#      ansible.builtin.debug:
+#        msg: "Successfully extracted {{ credential_response.json.count }} credentials to {{ output_file }}"
+
+    - name: Summary
+      ansible.builtin.debug:
+        msg: "Full YAML definitions exported to {{ output_file }}."
