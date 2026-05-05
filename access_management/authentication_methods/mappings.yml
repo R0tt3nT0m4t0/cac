@@ -1,0 +1,12 @@
+---
+ldap_team_mappings:
+  "Automation Administrators":
+    organization: "Automation"
+    ad_group_dn: "CN=SG-CP-AAP-Admin,OU=Support Groups,OU=Infrastructure Groups,OU=Infrastructure Objects,DC=corp,DC=xcelenergy,DC=com"
+  "Automation Platform Admins Administrators":
+    organization: "Automation Platform Admins"
+    ad_group_dn: "CN=SG-CP-AAP-AP-Admin,OU=Support Groups,OU=Infrastructure Groups,OU=Infrastructure Objects,DC=corp,DC=xcelenergy,DC=com"
+  "Automation Platform Admins Auditors":
+    organization: "Automation Platform Admins"
+    ad_group_dn: "CN=SG-CP-AAP-AP-Audit,OU=Support Groups,OU=Infrastructure Groups,OU=Infrastructure Objects,DC=corp,DC=xcelenergy,DC=com"
+  # ... CONTINUE THIS PATTERN FOR ALL 60+ TEAMS ...

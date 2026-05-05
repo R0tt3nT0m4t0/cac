@@ -8,7 +8,7 @@
     - ../../secrets.yml
 
   environment:
-    CONTROLLER_HOST: "https://automationgateway.home.lab"
+    CONTROLLER_HOST: "https://aap.home.lab"
     CONTROLLER_USERNAME: "{{ gateway_username }}"
     CONTROLLER_PASSWORD: "{{ gateway_password }}"
     CONTROLLER_VERIFY_SSL: false
@@ -37,6 +37,7 @@
         name: "{{ item.1 }}"
         state: "{{ state }}"
         inventory: "{{ item.0 }}"
+      ignore_errors: true
       loop: "{{ inventories | product(['web_servers', 'database_servers']) | list }}"
 
     - name: Remove hosts
@@ -44,6 +45,7 @@
         name: "{{ item }}"
         state: "{{ state }}"
         inventory: "{{ item.0 }}"
+      ignore_errors: true
       loop: "{{ nodes_dev }}"
 
     - name: Remove hosts from production
@@ -51,6 +53,7 @@
         name: "{{ item }}"
         state: "{{ state }}"
         inventory: production
+      ignore_errors: true
       loop: "{{ nodes_prod }}"
 
     - name: Remove inventories
@@ -58,4 +61,5 @@
         name: "{{ item }}"
         state: "{{ state }}"
         organization: "{{ organization }}"
+      ignore_errors: true
       loop: "{{ inventories }}"
