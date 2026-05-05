@@ -41,4 +41,3 @@
         mode: '0644'
       loop: "{{ results.assets.keys() | list }}"
       when: results.assets[item] | length > 0
-      

@@ -1,0 +1,40 @@
+---
+- name: export configuration
+  hosts: localhost
+  gather_facts: false
+  connection: local
+
+  vars:
+    config_dir: "aap_config_export"
+    controller_hostname: "https://aap.home.lab"
+    controller_username: "admin"
+    controller_password: "redhat123"
+    controller_validate_certs: false
+    controller_api_v2_path: "/api/controller"
+    controller_oauthtoken: null
+    controller_api_plugin: "ansible.controller.controller_api"
+    dir_orgs_vars: "{{ config_dir }}"
+    orgs: "Default"
+    env: "migration"
+    valid_tags: ["credentials", "credential_types"]
+    controller_configuration_filetree_create_tasks:
+      - { name: 'credential_types', var: 'controller_credential_types', tags: 'credential_types' }
+      - { name: 'credentials', var: 'controller_credentials', tags: 'credentials' }
+
+  tasks:
+
+    - name: Ensure output directory exists
+      ansible.builtin.file:
+        path: "{{ config_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Export Credentials via filetree_create
+      ansible.builtin.include_role:
+        name: infra.controller_configuration.filetree_create
+      vars:
+        output_path: "{{ config_dir }}"
+        controller_export_all_assets: false
+        controller_export_dict:
+          credentials: "all"
+          credential_types: "all"
